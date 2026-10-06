@@ -1,0 +1,11 @@
+{
+  "name": "Новый Магазин — Учёт выручки",
+  "short_name": "Новый Магазин",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1e3c72",
+  "theme_color": "#ff6b35",
+  "lang": "ru"
+}

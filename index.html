@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#ff6b35">
+<link rel="manifest" href="manifest.json">
+<title>Новый Магазин</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+  }
+  .app { background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); width: 100%; max-width: 520px; overflow: hidden; }
+  .header { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: #fff; padding: 24px; text-align: center; }
+  .header h1 { font-size: 28px; letter-spacing: 2px; font-weight: 800; }
+  .header .date { font-size: 15px; margin-top: 6px; opacity: 0.95; font-weight: 500; }
+  .content { padding: 20px 20px 24px; }
+
+  .type-tiles {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .tile {
+    padding: 10px 8px;
+    border-radius: 10px;
+    text-align: center;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+  }
+  .tile .tile-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.95;
+    margin-bottom: 4px;
+  }
+  .tile .tile-sum {
+    font-size: 14px;
+    font-weight: 800;
+  }
+  .tile.n { background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); }
+  .tile.t { background: linear-gradient(135deg, #ea580c 0%, #f97316 100%); }
+  .tile.per { background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); }
+
+  .sale-box {
+    background: #eef2ff;
+    border: 1px solid #a5b4fc;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .sale-box .sale-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #4338ca;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .sale-inputs {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .sale-inputs input {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 12px;
+    border: 1px solid #a5b4fc;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: right;
+    color: #1e3c72;
+    font-family: inherit;
+  }
+  .sale-inputs input:focus {
+    outline: none;
+    border-color: #4338ca;
+    box-shadow: 0 0 0 3px rgba(67,56,202,0.15);
+  }
+  .sale-inputs button {
+    padding: 10px 18px;
+    background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+    font-family: inherit;
+  }
+  .sale-inputs button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(67,56,202,0.35); }
+  .sale-inputs button:active { transform: scale(0.97); }
+
+  .pay-type {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .pay-type button {
+    flex: 1;
+    padding: 9px 6px;
+    background: #fff;
+    color: #4338ca;
+    border: 1.5px solid #a5b4fc;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.15s;
+    font-family: inherit;
+    text-transform: uppercase;
+  }
+  .pay-type button:hover { background: #e0e7ff; }
+  .pay-type button.active { color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .pay-type button[data-type="нал"].active { background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); border-color: #16a34a; }
+  .pay-type button[data-type="тер"].active { background: linear-gradient(135deg, #ea580c 0%, #f97316 100%); border-color: #ea580c; }
+  .pay-type button[data-type="пер"].active { background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); border-color: #0284c7; }
+
+  .sale-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sale-list:empty { display: none; }
+
+  .sale-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #fff;
+    border: 1px solid #e0e7ff;
+    border-radius: 8px;
+    font-size: 14px;
+    animation: slideIn 0.2s ease-out;
+    gap: 6px;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .sale-item .sale-num {
+    font-size: 12px;
+    color: #888;
+    font-weight: 700;
+    min-width: 22px;
+  }
+
+  .sale-item .sale-type-edit {
+    min-width: 52px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 5px 6px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #fff;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    user-select: none;
+    transition: 0.15s;
+  }
+  .sale-item .sale-type-edit:hover { filter: brightness(1.1); transform: scale(1.03); }
+  .sale-item .sale-type-edit.нал { background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); }
+  .sale-item .sale-type-edit.тер { background: linear-gradient(135deg, #ea580c 0%, #f97316 100%); }
+  .sale-item .sale-type-edit.пер { background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); }
+
+  .sale-item .sale-sum-edit {
+    flex: 1;
+    text-align: right;
+    font-weight: 700;
+    color: #4338ca;
+    padding: 5px 8px;
+    border: 1px dashed transparent;
+    border-radius: 6px;
+    background: transparent;
+    font-size: 14px;
+    font-family: inherit;
+    transition: 0.15s;
+    min-width: 0;
+    cursor: text;
+  }
+  .sale-item .sale-sum-edit:hover { border-color: #c7d2fe; background: #f8faff; }
+  .sale-item .sale-sum-edit:focus {
+    outline: none;
+    border-color: #4338ca;
+    border-style: solid;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(67,56,202,0.15);
+  }
+
+  .sale-item .sale-del {
+    background: #fee2e2;
+    color: #dc2626;
+    border: none;
+    border-radius: 6px;
+    width: 26px;
+    height: 26px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+    transition: 0.15s;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+  .sale-item .sale-del:hover { background: #fecaca; }
+  .sale-item .sale-del:active { transform: scale(0.9); }
+
+  .sale-totals {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #a5b4fc;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #4338ca;
+  }
+  .sale-totals .tot-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sale-totals .tot-row.total-main {
+    font-size: 15px;
+    padding-top: 6px;
+    border-top: 1px solid #c7d2fe;
+    margin-top: 4px;
+    color: #1e3c72;
+  }
+
+  .row { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-radius: 10px; margin-bottom: 8px; border: 1px solid #e8e8e8; }
+  .row label { font-size: 14px; color: #333; font-weight: 600; }
+  .row input { width: 140px; padding: 8px 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; text-align: right; font-weight: 600; color: #1e3c72; font-family: inherit; }
+  .row input:focus { outline: none; border-color: #2a5298; box-shadow: 0 0 0 3px rgba(42,82,152,0.15); }
+  .row input[readonly] { background: #f0f4ff; color: #2a5298; border-color: #c5d4f0; }
+  .row.highlight { background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); border: none; margin-top: 4px; padding: 16px 14px; }
+  .row.highlight label { color: #fff; font-size: 16px; }
+  .row.highlight input { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); font-size: 18px; }
+  .row.kassa { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border: none; margin-top: 12px; padding: 16px 14px; }
+  .row.kassa label { color: #fff; font-size: 16px; }
+  .row.kassa input { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); font-size: 18px; }
+  .divider { height: 1px; background: #eee; margin: 12px 0; }
+  .section-title { font-size: 13px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; margin: 24px 0 12px; text-align: center; }
+  .row.vozvrat { background: #fef2f2; border-color: #fca5a5; }
+  .row.vozvrat label { color: #dc2626; }
+  .btn-clear {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px;
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+    font-family: inherit;
+  }
+  .btn-clear:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+  .btn-clear:active { transform: scale(0.98); }
+
+  .type-menu {
+    position: absolute;
+    z-index: 1000;
+    background: #fff;
+    border: 1px solid #c7d2fe;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    overflow: hidden;
+    display: none;
+    flex-direction: column;
+    min-width: 90px;
+  }
+  .type-menu.show { display: flex; }
+  .type-menu button {
+    padding: 9px 14px;
+    border: none;
+    background: #fff;
+    color: #4338ca;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: 0.1s;
+    text-align: left;
+  }
+  .type-menu button:hover { background: #eef2ff; }
+  .type-menu button[data-type="нал"]:hover { background: #dcfce7; color: #15803d; }
+  .type-menu button[data-type="тер"]:hover { background: #ffedd5; color: #ea580c; }
+  .type-menu button[data-type="пер"]:hover { background: #e0f2fe; color: #0284c7; }
+
+  @media (max-width: 480px) {
+    .row { flex-direction: column; align-items: stretch; gap: 6px; }
+    .row input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>Новый Магазин</h1>
+    <div class="date" id="currentDate">—</div>
+  </div>
+  <div class="content">
+
+    <div class="type-tiles">
+      <div class="tile n"><div class="tile-title">Наличные</div><div class="tile-sum" id="tileN">0,00 ₽</div></div>
+      <div class="tile t"><div class="tile-title">Терминал</div><div class="tile-sum" id="tileT">0,00 ₽</div></div>
+      <div class="tile per"><div class="tile-title">Перевод</div><div class="tile-sum" id="tilePer">0,00 ₽</div></div>
+    </div>
+
+    <div class="sale-box">
+      <div class="sale-label">Продажи</div>
+      <div class="sale-inputs">
+        <input type="text" class="editable" inputmode="decimal" id="saleInput" placeholder="Сумма продажи">
+        <button onclick="addSale()">＋</button>
+      </div>
+
+      <div class="pay-type">
+        <button type="button" data-type="нал" onclick="selectType('нал')">НАЛ</button>
+        <button type="button" data-type="тер" onclick="selectType('тер')">ТЕР</button>
+        <button type="button" data-type="пер" onclick="selectType('пер')">ПЕР</button>
+      </div>
+
+      <div class="sale-list" id="saleList"></div>
+
+      <div class="sale-totals">
+        <div class="tot-row total-main"><span>Итого продаж:</span><span id="saleTotal">0,00 ₽</span></div>
+      </div>
+    </div>
+
+    <div class="row"><label>Касса вчера</label><input type="text" class="editable" inputmode="decimal" id="kassaVchera"></div>
+    <div class="row"><label>Наличные</label><input type="text" id="nalichnye" readonly></div>
+    <div class="row"><label>Безналичные</label><input type="text" id="beznalichnye" readonly></div>
+    <div class="row highlight"><label>Выручка сегодня</label><input type="text" id="vyruchka" readonly></div>
+    <div class="divider"></div>
+    <div class="row"><label>Выход</label><input type="text" id="zarplata" value="2 000 ₽" readonly></div>
+    <div class="row"><label>Другие расход</label><input type="text" class="editable" inputmode="decimal" id="drugie"></div>
+    <div class="row kassa"><label>КАССА</label><input type="text" id="kassa" readonly></div>
+    <div class="section-title">Возврат</div>
+    <div class="row vozvrat"><label>Возврат наличными</label><input type="text" class="editable" inputmode="decimal" id="vozvrat"></div>
+
+    <button class="btn-clear" onclick="clearAll()">Очистить</button>
+  </div>
+</div>
+
+<div class="type-menu" id="typeMenu">
+  <button data-type="нал" onclick="applyType('нал')">НАЛ</button>
+  <button data-type="тер" onclick="applyType('тер')">ТЕР</button>
+  <button data-type="пер" onclick="applyType('пер')">ПЕР</button>
+</div>
+
+<script>
+const ZARPLATA = 2000;
+
+let sales = [];
+let currentType = 'нал';
+let editingIndex = -1;
+
+function fmt(n) {
+  return (Math.round(n * 100) / 100).toLocaleString('ru-RU', {
+    minimumFractionDigits: 2, maximumFractionDigits: 2
+  }) + ' ₽';
+}
+
+function parseNum(s) {
+  if (typeof s === 'number') return s;
+  if (!s) return 0;
+  const cleaned = String(s).replace(/\s/g, '').replace(',', '.').replace(/[^\d.\-]/g, '');
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+
+function maskValue(raw, cursorPos) {
+  const digitsBeforeCursor = raw.slice(0, cursorPos).replace(/[^\d,.\-]/g, '').length;
+  let cleaned = raw.replace(/[^\d,.\-]/g, '');
+  const firstSep = cleaned.search(/[,.]/);
+  if (firstSep !== -1) {
+    const before = cleaned.slice(0, firstSep + 1);
+    const after = cleaned.slice(firstSep + 1).replace(/[,.]/g, '');
+    cleaned = before + after;
+  }
+  cleaned = cleaned.replace(/(?!^)-/g, '');
+
+  let [intPart, fracPart] = cleaned.split(/[,.]/);
+  intPart = intPart || '';
+  intPart = intPart.replace(/^0+(?=\d)/, '');
+
+  const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  let formatted = formattedInt;
+  if (fracPart !== undefined) formatted += ',' + fracPart.slice(0, 2);
+
+  let newCursor = 0, digitsSeen = 0;
+  for (let i = 0; i < formatted.length; i++) {
+    if (digitsSeen === digitsBeforeCursor) break;
+    if (/\d/.test(formatted[i])) digitsSeen++;
+    newCursor = i + 1;
+  }
+  if (digitsBeforeCursor >= formatted.replace(/[^\d]/g, '').length) {
+    newCursor = formatted.length;
+  }
+  return { value: formatted, cursor: newCursor };
+}
+
+function attachMask(inp) {
+  inp.addEventListener('input', (e) => {
+    const el = e.target;
+    const { value, cursor } = maskValue(el.value, el.selectionStart);
+    el.value = value;
+    el.setSelectionRange(cursor, cursor);
+    recalc();
+  });
+
+  inp.addEventListener('focus', () => {
+    setTimeout(() => inp.select(), 0);
+  });
+}
+
+function selectType(type) {
+  currentType = type;
+  document.querySelectorAll('.pay-type button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.type === type);
+  });
+}
+
+function addSale() {
+  const inp = document.getElementById('saleInput');
+  const val = parseNum(inp.value);
+  if (val <= 0) return;
+  sales.push({ sum: val, type: currentType });
+  inp.value = '';
+  renderSales();
+  recalc();
+}
+
+function removeSale(idx) {
+  sales.splice(idx, 1);
+  closeTypeMenu();
+  renderSales();
+  recalc();
+}
+
+function openTypeMenu(idx, event) {
+  event.stopPropagation();
+  editingIndex = idx;
+
+  const menu = document.getElementById('typeMenu');
+  const rect = event.target.getBoundingClientRect();
+
+  menu.classList.add('show');
+  menu.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  menu.style.left = (rect.left + window.scrollX) + 'px';
+
+  const menuRect = menu.getBoundingClientRect();
+  if (menuRect.right > window.innerWidth - 8) {
+    menu.style.left = (window.innerWidth - menuRect.width - 8 + window.scrollX) + 'px';
+  }
+  if (menuRect.bottom > window.innerHeight - 8) {
+    menu.style.top = (rect.top + window.scrollY - menuRect.height - 4) + 'px';
+  }
+}
+
+function closeTypeMenu() {
+  document.getElementById('typeMenu').classList.remove('show');
+  editingIndex = -1;
+}
+
+function applyType(type) {
+  if (editingIndex < 0) return;
+  sales[editingIndex].type = type;
+  closeTypeMenu();
+  renderSales();
+  recalc();
+}
+
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('typeMenu');
+  if (menu.classList.contains('show') && !menu.contains(e.target)) {
+    closeTypeMenu();
+  }
+});
+
+function getSums() {
+  let sumN = 0, sumT = 0, sumPer = 0;
+  sales.forEach(s => {
+    if (s.type === 'нал') sumN += s.sum;
+    else if (s.type === 'тер') sumT += s.sum;
+    else if (s.type === 'пер') sumPer += s.sum;
+  });
+  return { sumN, sumT, sumPer };
+}
+
+function renderSales() {
+  const list = document.getElementById('saleList');
+  list.innerHTML = '';
+
+  sales.forEach((sale, i) => {
+    const item = document.createElement('div');
+    item.className = 'sale-item';
+
+    const num = document.createElement('span');
+    num.className = 'sale-num';
+    num.textContent = (i + 1) + '.';
+    item.appendChild(num);
+
+    const typeBtn = document.createElement('button');
+    typeBtn.type = 'button';
+    typeBtn.className = 'sale-type-edit ' + sale.type;
+    typeBtn.textContent = sale.type.toUpperCase();
+    typeBtn.title = 'Изменить категорию';
+    typeBtn.addEventListener('click', (ev) => openTypeMenu(i, ev));
+    item.appendChild(typeBtn);
+
+    const sumInput = document.createElement('input');
+    sumInput.type = 'text';
+    sumInput.inputMode = 'decimal';
+    sumInput.className = 'sale-sum-edit';
+    sumInput.value = fmt(sale.sum).replace(' ₽', '');
+    sumInput.addEventListener('focus', () => {
+      sumInput.value = String(sale.sum).replace('.', ',');
+      setTimeout(() => sumInput.select(), 0);
+    });
+    sumInput.addEventListener('input', (ev) => {
+      const { value, cursor } = maskValue(ev.target.value, ev.target.selectionStart);
+      ev.target.value = value;
+      ev.target.setSelectionRange(cursor, cursor);
+    });
+    sumInput.addEventListener('blur', () => {
+      const val = parseNum(sumInput.value);
+      if (val > 0) {
+        sales[i].sum = val;
+        sumInput.value = fmt(val).replace(' ₽', '');
+        renderSales();
+        recalc();
+      } else {
+        sumInput.value = fmt(sale.sum).replace(' ₽', '');
+      }
+    });
+    sumInput.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') { ev.preventDefault(); sumInput.blur(); }
+    });
+    item.appendChild(sumInput);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'sale-del';
+    delBtn.textContent = '×';
+    delBtn.title = 'Удалить';
+    delBtn.addEventListener('click', () => removeSale(i));
+    item.appendChild(delBtn);
+
+    list.appendChild(item);
+  });
+
+  const { sumN, sumT, sumPer } = getSums();
+  const total = sumN + sumT + sumPer;
+
+  document.getElementById('tileN').textContent = fmt(sumN);
+  document.getElementById('tileT').textContent = fmt(sumT);
+  document.getElementById('tilePer').textContent = fmt(sumPer);
+
+  document.getElementById('saleTotal').textContent = fmt(total);
+
+  document.getElementById('nalichnye').value = fmt(sumN);
+  document.getElementById('beznalichnye').value = fmt(sumT + sumPer);
+}
+
+function recalc() {
+  const kassaVchera = parseNum(document.getElementById('kassaVchera').value);
+  const drugie = parseNum(document.getElementById('drugie').value);
+  const vozvrat = parseNum(document.getElementById('vozvrat').value);
+
+  const { sumN, sumT, sumPer } = getSums();
+  const nalichnye = sumN;
+  const beznalichnye = sumT + sumPer;
+
+  const vyruchka = nalichnye + beznalichnye;
+
+  const kassa = kassaVchera + nalichnye - ZARPLATA - drugie + vozvrat;
+
+  document.getElementById('vyruchka').value = fmt(vyruchka);
+  document.getElementById('kassa').value = fmt(kassa);
+}
+
+function clearAll() {
+  document.querySelectorAll('.editable').forEach(inp => { inp.value = ''; });
+  sales = [];
+  closeTypeMenu();
+  renderSales();
+  recalc();
+}
+
+document.querySelectorAll('.editable').forEach(attachMask);
+
+document.getElementById('saleInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); addSale(); }
+});
+
+function setDate() {
+  const d = new Date();
+  document.getElementById('currentDate').textContent =
+    d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+selectType('нал');
+
+setDate();
+renderSales();
+recalc();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
